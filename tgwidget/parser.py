@@ -1,10 +1,19 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, time
+from datetime import date, datetime, time
 from typing import Optional
 
 from .types import ColorFormat, DateFormat, DateMode, DateOrder
+
+
+def _strip_command(value: str) -> str:
+    """Strip Telegram bot command prefix (e.g. '/start ') from value."""
+    if value.startswith("/"):
+        parts = value.split(None, 1)
+        if len(parts) > 1:
+            return parts[1]
+    return value
 
 
 @dataclass
@@ -15,6 +24,12 @@ class DateResult:
     time_end: Optional[str] = None
     timestamp: Optional[int] = None
     timestamp_end: Optional[int] = None
+    datetime_obj: Optional[datetime] = None
+    datetime_end_obj: Optional[datetime] = None
+    date_obj: Optional[date] = None
+    date_end_obj: Optional[date] = None
+    time_obj: Optional[time] = None
+    time_end_obj: Optional[time] = None
 
 
 @dataclass
@@ -30,61 +45,8 @@ class ScheduleDay:
     enabled: bool
     start: Optional[str] = None
     end: Optional[str] = None
-
-
-@dataclass
-class ScheduleResult:
-    days: list[ScheduleDay]
-
-
-def parse_date(
-    value: str,
-    mode: DateMode = "date",
-    format: DateFormat = "default",
-    order: DateOrder = "ymd",
-) -> DateResult:
-    """Parse date widget result string back into structured data."""
-    result = DateResult()
-
-    if format in ("unix-s", "unix-ms"):
-        parts = value.split("_")
-        div = 1000 if format == "unix-s" else 1
-        ts = int(parts[0]) * div if format == "unix-s" else int(parts[0])
-        result.timestamp = int(parts[0])
-        if len(parts) > 1:
-            result.timestamp_end = int(parts[1])
-        dt = datetime.fromtimestamp(ts / 1000)
-        result.date = dt.strftime("%Y-%m-%d")
-        result.time = dt.strftime("%H:%M")
-        if result.timestamp_end is not None:
-            ts_end = int(parts[1]) * div if format == "unix-s" else int(parts[1])
-            dt_end = datetime.fromtimestamp(ts_end / 1000)
-            result.date_end = dt_end.strftime("%Y-%m-%d")
-            result.time_end = dt_end.strftime("%H:%M")
-        return result
-
-    if mode == "date":
-        result.date = _parse_date_str(value, order)
-    elif mode == "time":
-        h, m = value.split("-")
-        result.time = f"{h}:{m}"
-    elif mode == "datetime":
-        date_part, time_part = value.split("_")
-        result.date = _parse_date_str(date_part, order)
-        h, m = time_part.split("-")
-        result.time = f"{h}:{m}"
-    elif mode == "date-range":
-        parts = value.split("_")
-        result.date = _parse_date_str(parts[0], order)
-        result.date_end = _parse_date_str(parts[1], order)
-    elif mode == "time-range":
-        parts = value.split("_")
-        h1, m1 = parts[0].split("-")
-        h2, m2 = parts[1].split("-")
-        result.time = f"{h1}:{m1}"
-        result.time_end = f"{h2}:{m2}"
-
-    return result
+    start_time: Optional[time] = None
+    end_time: Optional[time] = None
 
 
 def _parse_date_str(value: str, order: DateOrder) -> str:
@@ -97,8 +59,79 @@ def _parse_date_str(value: str, order: DateOrder) -> str:
         return f"{parts[2]}-{parts[0]}-{parts[1]}"
 
 
+def parse_date(
+    value: str,
+    mode: DateMode = "date",
+    format: DateFormat = "default",
+    order: DateOrder = "ymd",
+) -> DateResult:
+    """Parse date widget result string back into structured data."""
+    value = _strip_command(value)
+    result = DateResult()
+
+    if format in ("unix-s", "unix-ms"):
+        parts = value.split("_")
+        ts_raw = int(parts[0])
+        result.timestamp = ts_raw
+        ts_seconds = ts_raw if format == "unix-s" else ts_raw / 1000
+        dt = datetime.fromtimestamp(ts_seconds)
+        result.date = dt.strftime("%Y-%m-%d")
+        result.time = dt.strftime("%H:%M")
+        result.datetime_obj = dt
+        result.date_obj = dt.date()
+        result.time_obj = dt.time().replace(second=0, microsecond=0)
+        if len(parts) > 1:
+            ts_end_raw = int(parts[1])
+            result.timestamp_end = ts_end_raw
+            ts_end_seconds = ts_end_raw if format == "unix-s" else ts_end_raw / 1000
+            dt_end = datetime.fromtimestamp(ts_end_seconds)
+            result.date_end = dt_end.strftime("%Y-%m-%d")
+            result.time_end = dt_end.strftime("%H:%M")
+            result.datetime_end_obj = dt_end
+            result.date_end_obj = dt_end.date()
+            result.time_end_obj = dt_end.time().replace(second=0, microsecond=0)
+        return result
+
+    if mode == "date":
+        date_str = _parse_date_str(value, order)
+        result.date = date_str
+        result.date_obj = date.fromisoformat(date_str)
+    elif mode == "time":
+        h, m = value.split("-")
+        result.time = f"{h}:{m}"
+        result.time_obj = time(int(h), int(m))
+    elif mode == "datetime":
+        date_part, time_part = value.split("_")
+        date_str = _parse_date_str(date_part, order)
+        h, m = time_part.split("-")
+        result.date = date_str
+        result.time = f"{h}:{m}"
+        result.date_obj = date.fromisoformat(date_str)
+        result.time_obj = time(int(h), int(m))
+        result.datetime_obj = datetime.combine(result.date_obj, result.time_obj)
+    elif mode == "date-range":
+        parts = value.split("_")
+        date_str = _parse_date_str(parts[0], order)
+        date_end_str = _parse_date_str(parts[1], order)
+        result.date = date_str
+        result.date_end = date_end_str
+        result.date_obj = date.fromisoformat(date_str)
+        result.date_end_obj = date.fromisoformat(date_end_str)
+    elif mode == "time-range":
+        parts = value.split("_")
+        h1, m1 = parts[0].split("-")
+        h2, m2 = parts[1].split("-")
+        result.time = f"{h1}:{m1}"
+        result.time_end = f"{h2}:{m2}"
+        result.time_obj = time(int(h1), int(m1))
+        result.time_end_obj = time(int(h2), int(m2))
+
+    return result
+
+
 def parse_color(value: str, format: ColorFormat = "hex") -> ColorResult:
     """Parse color widget result string."""
+    value = _strip_command(value)
     result = ColorResult(raw=value)
     if format == "hex":
         result.hex = f"#{value}"
@@ -111,8 +144,9 @@ def parse_color(value: str, format: ColorFormat = "hex") -> ColorResult:
     return result
 
 
-def parse_schedule(value: str) -> ScheduleResult:
+def parse_schedule(value: str) -> list[ScheduleDay]:
     """Parse schedule widget result (bunch format: 56 chars, 8 per day)."""
+    value = _strip_command(value)
     if len(value) != 56:
         raise ValueError(f"Schedule bunch format must be 56 chars, got {len(value)}")
     days: list[ScheduleDay] = []
@@ -121,7 +155,13 @@ def parse_schedule(value: str) -> ScheduleResult:
         if chunk == "00000000":
             days.append(ScheduleDay(enabled=False))
         else:
-            start = f"{chunk[0:2]}:{chunk[2:4]}"
-            end = f"{chunk[4:6]}:{chunk[6:8]}"
-            days.append(ScheduleDay(enabled=True, start=start, end=end))
+            start_str = f"{chunk[0:2]}:{chunk[2:4]}"
+            end_str = f"{chunk[4:6]}:{chunk[6:8]}"
+            days.append(ScheduleDay(
+                enabled=True,
+                start=start_str,
+                end=end_str,
+                start_time=time(int(chunk[0:2]), int(chunk[2:4])),
+                end_time=time(int(chunk[4:6]), int(chunk[6:8])),
+            ))
     return days

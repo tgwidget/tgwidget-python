@@ -3,8 +3,9 @@ from __future__ import annotations
 import json
 import re
 from base64 import b64encode
-from typing import Any, Optional
+from typing import Any, List, Optional, Union
 
+from .parser import ColorResult, DateResult, ScheduleDay, parse_color, parse_date, parse_schedule
 from .types import (
     VALID_COLOR_FORMATS,
     VALID_COLOR_SCHEMES,
@@ -111,3 +112,18 @@ class TgWidget:
 
     def payload(self) -> dict[str, Any]:
         return self._build_payload()
+
+    def parse(self, value: str) -> Union[DateResult, ColorResult, List[ScheduleDay]]:
+        """Parse widget result using the configured widget type and options."""
+        if self._widget == "date":
+            return parse_date(
+                value,
+                mode=self._payload.get("mode", "date"),
+                format=self._payload.get("format", "default"),
+                order=self._payload.get("order", "ymd"),
+            )
+        elif self._widget == "color":
+            return parse_color(value, format=self._payload.get("format", "hex"))
+        elif self._widget == "schedule":
+            return parse_schedule(value)
+        raise ValueError("No widget type set. Call .date(), .color(), or .schedule() first.")
