@@ -6,6 +6,7 @@ from base64 import b64encode
 from typing import Any, List, Optional, Union
 
 from .parser import ColorResult, DateResult, ScheduleDay, parse_color, parse_date, parse_schedule
+from .pattern import get_pattern
 from .types import (
     VALID_COLOR_FORMATS,
     VALID_COLOR_SCHEMES,
@@ -112,6 +113,18 @@ class TgWidget:
 
     def payload(self) -> dict[str, Any]:
         return self._build_payload()
+
+    @property
+    def pattern(self) -> str:
+        """Human-readable format pattern for the current widget configuration."""
+        if not self._widget:
+            raise ValueError("No widget type set. Call .date(), .color(), or .schedule() first.")
+        return get_pattern(
+            self._widget,
+            mode=self._payload.get("mode"),
+            format=self._payload.get("format"),
+            order=self._payload.get("order"),
+        )
 
     def parse(self, value: str) -> Union[DateResult, ColorResult, List[ScheduleDay]]:
         """Parse widget result using the configured widget type and options."""

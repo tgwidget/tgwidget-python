@@ -79,6 +79,26 @@ result = parse_color("/start FF6600", format="hex")
 # result.hex == '#FF6600'
 ```
 
+### Pattern (informational format string)
+
+Each widget exposes a `.pattern` property — a human-readable format hint you can show to users:
+
+```python
+widget = TgWidget("your_bot").date(mode="datetime")
+widget.pattern  # "YYYY-MM-DD HH:MM"
+
+widget2 = TgWidget("your_bot").date(mode="date", order="dmy")
+widget2.pattern  # "DD-MM-YYYY"
+
+widget3 = TgWidget("your_bot").color(format="hex")
+widget3.pattern  # "#RRGGBB"
+
+# Use in bot messages:
+await ctx.reply(f"Введите дату в формате {widget.pattern}")
+```
+
+You can also use the standalone `get_pattern(widget, mode, format, order)` function directly.
+
 ### Widget-level parsing with `parse()`
 
 If you keep a reference to the widget builder, you can call `.parse()` directly — it automatically uses the configured widget type and options:
@@ -104,6 +124,7 @@ Create a widget builder.
 - `.style(color_scheme, accent, tint, liquid_glass, adapt_tg_theme, adopt_tg_palette)` — Styling
 - `.url(base_url)` — Generate the final URL
 - `.payload()` — Get the raw payload dict
+- `.pattern` — Human-readable format string (e.g. `"YYYY-MM-DD HH:MM"`)
 - `.parse(value)` — Parse a widget result string (auto-detects parser from widget type)
 
 ### Parsers
