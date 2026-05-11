@@ -9,9 +9,9 @@ from .parser import (
 )
 from .pattern import get_pattern
 from .types import (
-    SCHEDULE_BUNCH_LENGTH,
-    SCHEDULE_POINT_DISABLED,
-    SCHEDULE_POINT_LENGTH,
+    SCHEDULE_RANGE_LENGTH,
+    SCHEDULE_SINGLE_DISABLED,
+    SCHEDULE_SINGLE_LENGTH,
 )
 
 __all__ = [
@@ -23,8 +23,8 @@ __all__ = [
     "DateResult",
     "ColorResult",
     "ScheduleDay",
-    "SCHEDULE_BUNCH_LENGTH",
-    "SCHEDULE_POINT_LENGTH",
-    "SCHEDULE_POINT_DISABLED",
+    "SCHEDULE_RANGE_LENGTH",
+    "SCHEDULE_SINGLE_LENGTH",
+    "SCHEDULE_SINGLE_DISABLED",
 ]
-__version__ = "0.3.0"
+__version__ = "0.4.0"
