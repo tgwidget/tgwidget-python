@@ -79,6 +79,32 @@ result = parse_color("/start FF6600", format="hex")
 # result.hex == '#FF6600'
 ```
 
+### Date options
+
+The `.date()` method accepts extra keyword arguments for controlling initial state and validation:
+
+```python
+# Duration picker: no auto-select, starts at 00:00:00
+url = TgWidget("your_bot").date(mode="time-seconds", auto_now=False).url()
+
+# Duration with custom default
+url = TgWidget("your_bot").date(mode="time-seconds", auto_now=False, default="01-30-00").url()
+
+# Time picker with allowed range
+url = TgWidget("your_bot").date(mode="time", min="09-00", max="18-00").url()
+
+# Range validation in parser
+widget = TgWidget("your_bot").date(mode="time-seconds", min="00-00-00", max="23-59-59")
+widget.parse("25-00-00")  # raises ValueError
+```
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `auto_now` | `bool` | Auto-select current time on open. Default: `True` for time/datetime, not set otherwise. |
+| `default` | `str` | Default value in widget format (e.g. `"01-30-00"`). Used when `auto_now` is `False`. |
+| `min` | `str` | Minimum allowed value. Validated both in frontend and by SDK parser. |
+| `max` | `str` | Maximum allowed value. Validated both in frontend and by SDK parser. |
+
 ### Pattern (informational format string)
 
 Each widget exposes a `.pattern` property — a human-readable format hint you can show to users:
@@ -118,7 +144,7 @@ result = widget.parse("/start 2025-03-15_14-30")
 
 Create a widget builder.
 
-- `.date(mode, format, order)` — Date/time picker
+- `.date(mode, format, order, *, auto_now, default, min, max)` — Date/time picker
 - `.color(format)` — Color picker
 - `.schedule()` — Weekly schedule
 - `.style(color_scheme, accent, tint, liquid_glass, adapt_tg_theme, adopt_tg_palette)` — Styling
@@ -129,7 +155,7 @@ Create a widget builder.
 
 ### Parsers
 
-- `parse_date(value, mode, format, order)` → `DateResult`
+- `parse_date(value, mode, format, order, *, min, max)` → `DateResult` (raises `ValueError` if outside min/max)
 - `parse_color(value, format)` → `ColorResult`
 - `parse_schedule(value)` → `list[ScheduleDay]`
 

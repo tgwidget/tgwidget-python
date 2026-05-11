@@ -16,6 +16,48 @@ def _strip_command(value: str) -> str:
     return value
 
 
+def _time_to_seconds(time_str: str) -> int:
+    parts = [int(p) for p in time_str.replace(":", "-").split("-")]
+    h = parts[0] if len(parts) > 0 else 0
+    m = parts[1] if len(parts) > 1 else 0
+    s = parts[2] if len(parts) > 2 else 0
+    return h * 3600 + m * 60 + s
+
+
+def _validate_range(
+    value: str, mode: DateMode, min_val: Optional[str], max_val: Optional[str]
+) -> None:
+    if min_val is None and max_val is None:
+        return
+
+    if mode in ("time", "time-seconds"):
+        sec = _time_to_seconds(value)
+        if min_val is not None and sec < _time_to_seconds(min_val):
+            raise ValueError(f"Value {value} is below minimum {min_val}")
+        if max_val is not None and sec > _time_to_seconds(max_val):
+            raise ValueError(f"Value {value} is above maximum {max_val}")
+    elif mode in ("date", "datetime"):
+        normalized = value.replace("_", "T").replace("-", ":", 2) if "_" in value else value
+        try:
+            ts = datetime.fromisoformat(normalized.replace("-", ":", 2) if mode == "datetime" else normalized)
+        except ValueError:
+            return
+        if min_val is not None:
+            min_norm = min_val.replace("_", "T")
+            try:
+                if ts < datetime.fromisoformat(min_norm):
+                    raise ValueError(f"Value {value} is below minimum {min_val}")
+            except (ValueError, TypeError):
+                pass
+        if max_val is not None:
+            max_norm = max_val.replace("_", "T")
+            try:
+                if ts > datetime.fromisoformat(max_norm):
+                    raise ValueError(f"Value {value} is above maximum {max_val}")
+            except (ValueError, TypeError):
+                pass
+
+
 @dataclass
 class DateResult:
     date: Optional[str] = None
@@ -64,10 +106,18 @@ def parse_date(
     mode: DateMode = "date",
     format: DateFormat = "default",
     order: DateOrder = "ymd",
+    *,
+    min: Optional[str] = None,
+    max: Optional[str] = None,
 ) -> DateResult:
-    """Parse date widget result string back into structured data."""
+    """Parse date widget result string back into structured data.
+
+    Raises ValueError if value is outside the min/max range.
+    """
     value = _strip_command(value)
     result = DateResult()
+
+    _validate_range(value, mode, min, max)
 
     if format in ("unix-s", "unix-ms"):
         parts = value.split("_")
