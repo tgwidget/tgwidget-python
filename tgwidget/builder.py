@@ -47,6 +47,11 @@ class TgWidget:
         mode: DateMode = "date",
         format: DateFormat = "default",
         order: DateOrder = "ymd",
+        *,
+        auto_now: Optional[bool] = None,
+        default: Optional[str] = None,
+        min: Optional[str] = None,
+        max: Optional[str] = None,
     ) -> TgWidget:
         if mode not in VALID_DATE_MODES:
             raise ValueError(f"Invalid date mode '{mode}'. Must be one of: {VALID_DATE_MODES}")
@@ -56,6 +61,14 @@ class TgWidget:
             raise ValueError(f"Invalid date order '{order}'. Must be one of: {VALID_DATE_ORDERS}")
         self._widget = "date"
         self._payload = {"mode": mode, "format": format, "order": order}
+        if auto_now is not None:
+            self._payload["autoNow"] = auto_now
+        if default is not None:
+            self._payload["default"] = default
+        if min is not None:
+            self._payload["min"] = min
+        if max is not None:
+            self._payload["max"] = max
         return self
 
     def color(self, format: ColorFormat = "hex") -> TgWidget:
@@ -134,6 +147,8 @@ class TgWidget:
                 mode=self._payload.get("mode", "date"),
                 format=self._payload.get("format", "default"),
                 order=self._payload.get("order", "ymd"),
+                min=self._payload.get("min"),
+                max=self._payload.get("max"),
             )
         elif self._widget == "color":
             return parse_color(value, format=self._payload.get("format", "hex"))
