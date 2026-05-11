@@ -100,6 +100,10 @@ def parse_date(
         h, m = value.split("-")
         result.time = f"{h}:{m}"
         result.time_obj = time(int(h), int(m))
+    elif mode == "time-seconds":
+        h, m, s = value.split("-")
+        result.time = f"{h}:{m}:{s}"
+        result.time_obj = time(int(h), int(m), int(s))
     elif mode == "datetime":
         date_part, time_part = value.split("_")
         date_str = _parse_date_str(date_part, order)

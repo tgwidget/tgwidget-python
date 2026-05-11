@@ -9,6 +9,7 @@ _DATE_PATTERNS: dict[str, str] = {
 }
 
 _TIME_PATTERN = "HH-MM"
+_TIME_SEC_PATTERN = "HH-MM-SS"
 
 
 def get_pattern(
@@ -25,6 +26,8 @@ def get_pattern(
             return date_pat
         if m == "time":
             return _TIME_PATTERN
+        if m == "time-seconds":
+            return _TIME_SEC_PATTERN
         if m == "datetime":
             return f"{date_pat}_{_TIME_PATTERN}"
         if m == "date-range":
