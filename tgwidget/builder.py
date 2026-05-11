@@ -13,11 +13,13 @@ from .types import (
     VALID_DATE_FORMATS,
     VALID_DATE_MODES,
     VALID_DATE_ORDERS,
+    VALID_SCHEDULE_FORMATS,
     ColorFormat,
     ColorScheme,
     DateFormat,
     DateMode,
     DateOrder,
+    ScheduleFormat,
 )
 
 BASE_URL = "https://tgwidget.github.io/"
@@ -78,9 +80,11 @@ class TgWidget:
         self._payload = {"format": format}
         return self
 
-    def schedule(self) -> TgWidget:
+    def schedule(self, format: ScheduleFormat = "bunch") -> TgWidget:
+        if format not in VALID_SCHEDULE_FORMATS:
+            raise ValueError(f"Invalid schedule format '{format}'. Must be one of: {VALID_SCHEDULE_FORMATS}")
         self._widget = "schedule"
-        self._payload = {"format": "bunch"}
+        self._payload = {"format": format}
         return self
 
     def style(
@@ -153,5 +157,5 @@ class TgWidget:
         elif self._widget == "color":
             return parse_color(value, format=self._payload.get("format", "hex"))
         elif self._widget == "schedule":
-            return parse_schedule(value)
+            return parse_schedule(value, format=self._payload.get("format", "bunch"))
         raise ValueError("No widget type set. Call .date(), .color(), or .schedule() first.")

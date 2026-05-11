@@ -45,6 +45,9 @@ def get_pattern(
             return "H, S, L"
 
     if widget == "schedule":
+        fmt = format or "bunch"
+        if fmt == "point":
+            return "HH:MM × 7 days"
         return "HH:MM—HH:MM × 7 days"
 
     return ""
