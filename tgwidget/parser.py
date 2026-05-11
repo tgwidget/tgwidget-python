@@ -10,9 +10,9 @@ from .types import (
     DateMode,
     DateOrder,
     ScheduleFormat,
-    SCHEDULE_BUNCH_LENGTH,
-    SCHEDULE_POINT_LENGTH,
-    SCHEDULE_POINT_DISABLED,
+    SCHEDULE_RANGE_LENGTH,
+    SCHEDULE_SINGLE_LENGTH,
+    SCHEDULE_SINGLE_DISABLED,
 )
 
 
@@ -210,16 +210,16 @@ def parse_color(value: str, format: ColorFormat = "hex") -> ColorResult:
 
 
 def _detect_schedule_format(value: str, format: ScheduleFormat) -> ScheduleFormat:
-    if format != "bunch":
+    if format != "range":
         return format
-    if len(value) == SCHEDULE_POINT_LENGTH:
-        return "point"
-    return "bunch"
+    if len(value) == SCHEDULE_SINGLE_LENGTH:
+        return "single"
+    return "range"
 
 
-def _parse_bunch_schedule(value: str) -> list[ScheduleDay]:
-    if len(value) != SCHEDULE_BUNCH_LENGTH:
-        raise ValueError(f"Schedule bunch format must be {SCHEDULE_BUNCH_LENGTH} chars, got {len(value)}")
+def _parse_range_schedule(value: str) -> list[ScheduleDay]:
+    if len(value) != SCHEDULE_RANGE_LENGTH:
+        raise ValueError(f"Schedule range format must be {SCHEDULE_RANGE_LENGTH} chars, got {len(value)}")
     days: list[ScheduleDay] = []
     for i in range(7):
         chunk = value[i * 8 : (i + 1) * 8]
@@ -238,13 +238,13 @@ def _parse_bunch_schedule(value: str) -> list[ScheduleDay]:
     return days
 
 
-def _parse_point_schedule(value: str) -> list[ScheduleDay]:
-    if len(value) != SCHEDULE_POINT_LENGTH:
-        raise ValueError(f"Schedule point format must be {SCHEDULE_POINT_LENGTH} chars, got {len(value)}")
+def _parse_single_schedule(value: str) -> list[ScheduleDay]:
+    if len(value) != SCHEDULE_SINGLE_LENGTH:
+        raise ValueError(f"Schedule single format must be {SCHEDULE_SINGLE_LENGTH} chars, got {len(value)}")
     days: list[ScheduleDay] = []
     for i in range(7):
         chunk = value[i * 4 : (i + 1) * 4]
-        if chunk == SCHEDULE_POINT_DISABLED:
+        if chunk == SCHEDULE_SINGLE_DISABLED:
             days.append(ScheduleDay(enabled=False))
         else:
             t_str = f"{chunk[0:2]}:{chunk[2:4]}"
@@ -256,15 +256,15 @@ def _parse_point_schedule(value: str) -> list[ScheduleDay]:
     return days
 
 
-def parse_schedule(value: str, format: ScheduleFormat = "bunch") -> list[ScheduleDay]:
+def parse_schedule(value: str, format: ScheduleFormat = "range") -> list[ScheduleDay]:
     """Parse schedule widget result.
 
     Supports two formats:
-    - 'bunch': 56 chars (8 per day), each day = HHMMHHMM (start/end range)
-    - 'point': 28 chars (4 per day), each day = HHMM (single time point)
+    - 'range': 56 chars (8 per day), each day = HHMMHHMM (start/end range)
+    - 'single': 28 chars (4 per day), each day = HHMM (single time point)
     """
     value = _strip_command(value)
     resolved = _detect_schedule_format(value, format)
-    if resolved == "point":
-        return _parse_point_schedule(value)
-    return _parse_bunch_schedule(value)
+    if resolved == "single":
+        return _parse_single_schedule(value)
+    return _parse_range_schedule(value)

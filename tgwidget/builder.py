@@ -80,7 +80,7 @@ class TgWidget:
         self._payload = {"format": format}
         return self
 
-    def schedule(self, format: ScheduleFormat = "bunch") -> TgWidget:
+    def schedule(self, format: ScheduleFormat = "range") -> TgWidget:
         if format not in VALID_SCHEDULE_FORMATS:
             raise ValueError(f"Invalid schedule format '{format}'. Must be one of: {VALID_SCHEDULE_FORMATS}")
         self._widget = "schedule"

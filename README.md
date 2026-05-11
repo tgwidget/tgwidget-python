@@ -24,8 +24,8 @@ url = TgWidget("your_bot").color(format="hex").url()
 # Schedule (range — time windows per day)
 url = TgWidget("your_bot").schedule().url()
 
-# Schedule (point — fixed time per day)
-url = TgWidget("your_bot").schedule(format="point").url()
+# Schedule (single — fixed time per day)
+url = TgWidget("your_bot").schedule(format="single").url()
 
 # With styling
 url = (
@@ -66,13 +66,13 @@ result = parse_date("1710460800_1718236800", mode="date-range", format="unix-s")
 result = parse_color("FF6600", format="hex")
 # ColorResult(raw='FF6600', hex='#FF6600')
 
-# Schedule result — range (56-char bunch format)
+# Schedule result — range (56-char range format)
 result = parse_schedule("09001800090018000000000009001800090018000000000000000000")
 # [ScheduleDay(enabled=True, start='09:00', end='18:00',
 #              start_time=datetime.time(9, 0), end_time=datetime.time(18, 0)), ...]
 
-# Schedule result — point (28-char point format)
-result = parse_schedule("1200120099991200120099999999", format="point")
+# Schedule result — single (28-char single format)
+result = parse_schedule("1200120099991200120099999999", format="single")
 # [ScheduleDay(enabled=True, time_str='12:00', time_obj=datetime.time(12, 0)), ...]
 ```
 
@@ -153,7 +153,7 @@ Create a widget builder.
 
 - `.date(mode, format, order, *, auto_now, default, min, max)` — Date/time picker
 - `.color(format)` — Color picker
-- `.schedule(format)` — Weekly schedule (format: `'bunch'` | `'point'`)
+- `.schedule(format)` — Weekly schedule (format: `'range'` | `'single'`)
 - `.style(color_scheme, accent, tint, liquid_glass, adapt_tg_theme, adopt_tg_palette)` — Styling
 - `.url(base_url)` — Generate the final URL
 - `.payload()` — Get the raw payload dict
@@ -183,7 +183,7 @@ Create a widget builder.
 
 #### `ScheduleDay`
 - `enabled` — whether the day is active
-- `start`, `end` — time strings e.g. `'09:00'` (bunch format)
-- `start_time`, `end_time` — native `datetime.time` (bunch format)
-- `time_str` — single time string e.g. `'12:00'` (point format)
-- `time_obj` — native `datetime.time` (point format)
+- `start`, `end` — time strings e.g. `'09:00'` (range format)
+- `start_time`, `end_time` — native `datetime.time` (range format)
+- `time_str` — single time string e.g. `'12:00'` (single format)
+- `time_obj` — native `datetime.time` (single format)
