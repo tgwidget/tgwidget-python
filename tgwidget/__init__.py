@@ -8,6 +8,11 @@ from .parser import (
     parse_schedule,
 )
 from .pattern import get_pattern
+from .types import (
+    SCHEDULE_BUNCH_LENGTH,
+    SCHEDULE_POINT_DISABLED,
+    SCHEDULE_POINT_LENGTH,
+)
 
 __all__ = [
     "TgWidget",
@@ -18,5 +23,8 @@ __all__ = [
     "DateResult",
     "ColorResult",
     "ScheduleDay",
+    "SCHEDULE_BUNCH_LENGTH",
+    "SCHEDULE_POINT_LENGTH",
+    "SCHEDULE_POINT_DISABLED",
 ]
-__version__ = "0.2.0"
+__version__ = "0.3.0"
