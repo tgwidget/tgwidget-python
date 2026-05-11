@@ -8,7 +8,7 @@ _DATE_PATTERNS: dict[str, str] = {
     "mdy": "MM-DD-YYYY",
 }
 
-_TIME_PATTERN = "HH:MM"
+_TIME_PATTERN = "HH-MM"
 
 
 def get_pattern(
@@ -26,11 +26,11 @@ def get_pattern(
         if m == "time":
             return _TIME_PATTERN
         if m == "datetime":
-            return f"{date_pat} {_TIME_PATTERN}"
+            return f"{date_pat}_{_TIME_PATTERN}"
         if m == "date-range":
-            return f"{date_pat} — {date_pat}"
+            return f"{date_pat}_{date_pat}"
         if m == "time-range":
-            return f"{_TIME_PATTERN} — {_TIME_PATTERN}"
+            return f"{_TIME_PATTERN}_{_TIME_PATTERN}"
 
     if widget == "color":
         fmt = format or "hex"
