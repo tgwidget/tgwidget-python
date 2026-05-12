@@ -27,4 +27,4 @@ __all__ = [
     "SCHEDULE_SINGLE_LENGTH",
     "SCHEDULE_SINGLE_DISABLED",
 ]
-__version__ = "0.4.0"
+__version__ = "0.4.1"

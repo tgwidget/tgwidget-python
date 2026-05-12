@@ -220,6 +220,8 @@ def _detect_schedule_format(value: str, format: ScheduleFormat) -> ScheduleForma
 def _parse_range_schedule(value: str) -> list[ScheduleDay]:
     if len(value) != SCHEDULE_RANGE_LENGTH:
         raise ValueError(f"Schedule range format must be {SCHEDULE_RANGE_LENGTH} chars, got {len(value)}")
+    if not value.isdigit():
+        raise ValueError("Schedule value must contain only digits")
     days: list[ScheduleDay] = []
     for i in range(7):
         chunk = value[i * 8 : (i + 1) * 8]
@@ -241,6 +243,8 @@ def _parse_range_schedule(value: str) -> list[ScheduleDay]:
 def _parse_single_schedule(value: str) -> list[ScheduleDay]:
     if len(value) != SCHEDULE_SINGLE_LENGTH:
         raise ValueError(f"Schedule single format must be {SCHEDULE_SINGLE_LENGTH} chars, got {len(value)}")
+    if not value.isdigit():
+        raise ValueError("Schedule value must contain only digits")
     days: list[ScheduleDay] = []
     for i in range(7):
         chunk = value[i * 4 : (i + 1) * 4]
