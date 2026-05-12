@@ -157,5 +157,5 @@ class TgWidget:
         elif self._widget == "color":
             return parse_color(value, format=self._payload.get("format", "hex"))
         elif self._widget == "schedule":
-            return parse_schedule(value, format=self._payload.get("format", "bunch"))
+            return parse_schedule(value, format=self._payload.get("format", "range"))
         raise ValueError("No widget type set. Call .date(), .color(), or .schedule() first.")
