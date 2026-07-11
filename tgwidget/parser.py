@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timedelta, timezone
 from typing import Optional
 
 from .types import (
@@ -120,10 +120,17 @@ def parse_date(
     *,
     min: Optional[str] = None,
     max: Optional[str] = None,
+    utc_offset: Optional[int] = None,
 ) -> DateResult:
     """Parse date widget result string back into structured data.
 
     Raises ValueError if value is outside the min/max range.
+
+    For unix timestamp formats, `date`/`time` are always derived
+    deterministically from UTC (independent of the host machine's local
+    timezone). Pass `utc_offset` (minutes) to shift them to a fixed zone
+    instead, e.g. utc_offset=180 for MSK. `timestamp`/`datetime_obj` always
+    represent the true instant and are unaffected by `utc_offset`.
     """
     value = _strip_command(value)
     result = DateResult()
@@ -135,22 +142,25 @@ def parse_date(
         ts_raw = int(parts[0])
         result.timestamp = ts_raw
         ts_seconds = ts_raw if format == "unix-s" else ts_raw / 1000
-        dt = datetime.fromtimestamp(ts_seconds)
-        result.date = dt.strftime("%Y-%m-%d")
-        result.time = dt.strftime("%H:%M")
+        dt = datetime.fromtimestamp(ts_seconds, tz=timezone.utc)
         result.datetime_obj = dt
-        result.date_obj = dt.date()
-        result.time_obj = dt.time().replace(second=0, microsecond=0)
+        shift = timedelta(minutes=utc_offset) if utc_offset is not None else timedelta(0)
+        shifted = dt + shift
+        result.date = shifted.strftime("%Y-%m-%d")
+        result.time = shifted.strftime("%H:%M")
+        result.date_obj = shifted.date()
+        result.time_obj = shifted.time().replace(second=0, microsecond=0)
         if len(parts) > 1:
             ts_end_raw = int(parts[1])
             result.timestamp_end = ts_end_raw
             ts_end_seconds = ts_end_raw if format == "unix-s" else ts_end_raw / 1000
-            dt_end = datetime.fromtimestamp(ts_end_seconds)
-            result.date_end = dt_end.strftime("%Y-%m-%d")
-            result.time_end = dt_end.strftime("%H:%M")
+            dt_end = datetime.fromtimestamp(ts_end_seconds, tz=timezone.utc)
             result.datetime_end_obj = dt_end
-            result.date_end_obj = dt_end.date()
-            result.time_end_obj = dt_end.time().replace(second=0, microsecond=0)
+            shifted_end = dt_end + shift
+            result.date_end = shifted_end.strftime("%Y-%m-%d")
+            result.time_end = shifted_end.strftime("%H:%M")
+            result.date_end_obj = shifted_end.date()
+            result.time_end_obj = shifted_end.time().replace(second=0, microsecond=0)
         return result
 
     if mode == "date":

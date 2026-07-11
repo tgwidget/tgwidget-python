@@ -17,3 +17,15 @@ VALID_SCHEDULE_FORMATS: set[str] = set(get_args(ScheduleFormat))
 SCHEDULE_RANGE_LENGTH = 56
 SCHEDULE_SINGLE_LENGTH = 28
 SCHEDULE_SINGLE_DISABLED = "9999"
+
+MIN_UTC_OFFSET_MINUTES = -720
+MAX_UTC_OFFSET_MINUTES = 840
+
+
+def is_valid_utc_offset(minutes: int) -> bool:
+    """Whether `minutes` is a valid fixed UTC offset (whole minutes, -12:00..+14:00)."""
+    return (
+        isinstance(minutes, int)
+        and not isinstance(minutes, bool)
+        and MIN_UTC_OFFSET_MINUTES <= minutes <= MAX_UTC_OFFSET_MINUTES
+    )

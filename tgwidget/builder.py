@@ -8,6 +8,8 @@ from typing import Any, List, Optional, Union
 from .parser import ColorResult, DateResult, ScheduleDay, parse_color, parse_date, parse_schedule
 from .pattern import get_pattern
 from .types import (
+    MAX_UTC_OFFSET_MINUTES,
+    MIN_UTC_OFFSET_MINUTES,
     VALID_COLOR_FORMATS,
     VALID_COLOR_SCHEMES,
     VALID_DATE_FORMATS,
@@ -20,6 +22,7 @@ from .types import (
     DateMode,
     DateOrder,
     ScheduleFormat,
+    is_valid_utc_offset,
 )
 
 BASE_URL = "https://tgwidget.github.io/"
@@ -54,6 +57,7 @@ class TgWidget:
         default: Optional[str] = None,
         min: Optional[str] = None,
         max: Optional[str] = None,
+        utc_offset: Optional[int] = None,
     ) -> TgWidget:
         if mode not in VALID_DATE_MODES:
             raise ValueError(f"Invalid date mode '{mode}'. Must be one of: {VALID_DATE_MODES}")
@@ -61,6 +65,11 @@ class TgWidget:
             raise ValueError(f"Invalid date format '{format}'. Must be one of: {VALID_DATE_FORMATS}")
         if order not in VALID_DATE_ORDERS:
             raise ValueError(f"Invalid date order '{order}'. Must be one of: {VALID_DATE_ORDERS}")
+        if utc_offset is not None and not is_valid_utc_offset(utc_offset):
+            raise ValueError(
+                f"Invalid utc_offset '{utc_offset}'. Must be an integer number of minutes between "
+                f"{MIN_UTC_OFFSET_MINUTES} and {MAX_UTC_OFFSET_MINUTES}."
+            )
         self._widget = "date"
         self._payload = {"mode": mode, "format": format, "order": order}
         if auto_now is not None:
@@ -71,6 +80,8 @@ class TgWidget:
             self._payload["min"] = min
         if max is not None:
             self._payload["max"] = max
+        if utc_offset is not None:
+            self._payload["utcOffset"] = utc_offset
         return self
 
     def color(self, format: ColorFormat = "hex") -> TgWidget:
@@ -153,6 +164,7 @@ class TgWidget:
                 order=self._payload.get("order", "ymd"),
                 min=self._payload.get("min"),
                 max=self._payload.get("max"),
+                utc_offset=self._payload.get("utcOffset"),
             )
         elif self._widget == "color":
             return parse_color(value, format=self._payload.get("format", "hex"))
