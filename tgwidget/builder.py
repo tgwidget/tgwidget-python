@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import re
 from base64 import b64encode
+from datetime import datetime
 from typing import Any, List, Optional, Union
 
 from .parser import ColorResult, DateResult, ScheduleDay, parse_color, parse_date, parse_schedule
@@ -36,6 +37,16 @@ def _validate_hex(color: str, name: str) -> str:
     return color if color.startswith("#") else f"#{color}"
 
 
+def _local_utc_offset_minutes() -> int:
+    """Current process's local UTC offset, in minutes (positive = ahead of UTC).
+
+    Uses the same system-local-timezone semantics as calling `.astimezone()`
+    on a naive `datetime` (see the README warning on `datetime_obj`).
+    """
+    offset = datetime.now().astimezone().utcoffset()
+    return int(offset.total_seconds() // 60) if offset is not None else 0
+
+
 class TgWidget:
     """Builder for TeleWidget URLs."""
 
@@ -58,6 +69,7 @@ class TgWidget:
         min: Optional[str] = None,
         max: Optional[str] = None,
         utc_offset: Optional[int] = None,
+        auto_utc_offset: bool = True,
     ) -> TgWidget:
         if mode not in VALID_DATE_MODES:
             raise ValueError(f"Invalid date mode '{mode}'. Must be one of: {VALID_DATE_MODES}")
@@ -65,9 +77,13 @@ class TgWidget:
             raise ValueError(f"Invalid date format '{format}'. Must be one of: {VALID_DATE_FORMATS}")
         if order not in VALID_DATE_ORDERS:
             raise ValueError(f"Invalid date order '{order}'. Must be one of: {VALID_DATE_ORDERS}")
-        if utc_offset is not None and not is_valid_utc_offset(utc_offset):
+
+        resolved_utc_offset = utc_offset
+        if resolved_utc_offset is None and auto_utc_offset:
+            resolved_utc_offset = _local_utc_offset_minutes()
+        if resolved_utc_offset is not None and not is_valid_utc_offset(resolved_utc_offset):
             raise ValueError(
-                f"Invalid utc_offset '{utc_offset}'. Must be an integer number of minutes between "
+                f"Invalid utc_offset '{resolved_utc_offset}'. Must be an integer number of minutes between "
                 f"{MIN_UTC_OFFSET_MINUTES} and {MAX_UTC_OFFSET_MINUTES}."
             )
         self._widget = "date"
@@ -80,8 +96,8 @@ class TgWidget:
             self._payload["min"] = min
         if max is not None:
             self._payload["max"] = max
-        if utc_offset is not None:
-            self._payload["utcOffset"] = utc_offset
+        if resolved_utc_offset is not None:
+            self._payload["utcOffset"] = resolved_utc_offset
         return self
 
     def color(self, format: ColorFormat = "hex") -> TgWidget:
