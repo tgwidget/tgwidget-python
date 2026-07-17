@@ -86,6 +86,25 @@ result = parse_color("/start FF6600", format="hex")
 # result.hex == '#FF6600'
 ```
 
+> **⚠️ `datetime_obj`/`date_obj`/`time_obj` are naive for `format="default"`.**
+> They carry no `tzinfo` — they're the literal digits the picker sent, not
+> an absolute instant. If you need an actual moment in time (e.g. to store
+> and compare against `datetime.now()` elsewhere, like a scheduled-send
+> time), call `.timestamp()` or `.astimezone()` on them rather than assuming
+> they're already UTC: for a naive `datetime`, Python interprets it as the
+> **host process's local timezone** (`TZ` env var / system setting) when
+> doing either conversion. Treating it as UTC instead — e.g.
+> `calendar.timegm(dt.timetuple())` — silently produces a value shifted by
+> your host's UTC offset. This is standard `datetime` behavior, not
+> something this library adds, but it's an easy trap: pin your process's
+> `TZ` to whatever zone your users pick dates in, and let naive datetimes
+> flow through `.timestamp()`/`.astimezone()` rather than reimplementing
+> the conversion yourself.
+>
+> `format="unix-s"`/`"unix-ms"` sidestep this entirely — `datetime_obj` is
+> already timezone-aware (`tzinfo=timezone.utc`), since it's derived from
+> an unambiguous timestamp rather than raw digits.
+
 ### Date options
 
 The `.date()` method accepts extra keyword arguments for controlling initial state and validation:
@@ -171,7 +190,7 @@ Create a widget builder.
 #### `DateResult`
 - `date`, `time`, `date_end`, `time_end` — string representations
 - `timestamp`, `timestamp_end` — raw integer timestamps (unix modes)
-- `datetime_obj`, `datetime_end_obj` — native `datetime.datetime`
+- `datetime_obj`, `datetime_end_obj` — native `datetime.datetime` (naive for `format="default"`, `tzinfo=timezone.utc` for unix formats — see warning above)
 - `date_obj`, `date_end_obj` — native `datetime.date`
 - `time_obj`, `time_end_obj` — native `datetime.time`
 
